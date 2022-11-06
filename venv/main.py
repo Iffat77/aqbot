@@ -1,16 +1,33 @@
 import tweepy as twitter
 import requests 
+import json
 import keys
 import re
 
-# response_API = requests.get('http://api.waqi.info/feed/newyork/?token=')
+# response_API = requests.get(f'http://api.waqi.info/feed/newyork/?token={keys.API_TOKEN}')
 # print(response_API.status_code)
 
 # data = response_API.text
 # parse_json = json.loads(data)
 
 # print(parse_json)
+# api = f'http://api.waqi.info/feed/newyork/?token={keys.API_TOKEN}'
+city = ''
+aqual = None
 
+def get_data():
+    new_data = None
+    response = requests.get(f'http://api.waqi.info/feed/{city}/?token={keys.API_TOKEN}')
+    data = response.text
+    parse_json = json.loads(data)
+    for key in parse_json.keys():
+      if key == 'data':
+        new_data = (key, parse_json[key])
+        aqual = new_data[1]['aqi']
+    print(aqual)    
+    
+
+# get_data()
 # --------------------------
 
 # def tweet(api: tweepy.API, message: str, image_path=None):
@@ -49,16 +66,6 @@ def store_id(id, file):
 last_seen_id = retrieve_id(FILE)
 mentions = api.mentions_timeline(last_seen_id, tweet_mode="extended")
 
-# mentions = api.mentions_timeline()
-# for mention in mentions:
-#     tweet = (mention.text)
-#     print(tweet, "printing tweet")
-#     clean_tweet = re.sub("@[A-Za-z0-9_]+","", tweet)
-#     clean_tweet = re.sub("#[A-Za-z0-9_]+","", clean_tweet)
-#     clean_tweet = clean_tweet.lower()
-#     clean_tweet = clean_tweet.replace(" ", "")
-#     print(clean_tweet, "this is the clean tweet")
-
 for mention in reversed(mentions):
     if "airqual" in mention.full_text:
       tweet = (mention.full_text)
@@ -71,9 +78,12 @@ for mention in reversed(mentions):
       clean_tweet = clean_tweet.replace(" ", "")
       # print(clean_tweet, "this is the clean tweet")
       # logic to sort location for api search params go here
+      city = clean_tweet
+      get_data()
       last_seen_id = mention.id
       store_id(last_seen_id, FILE)
-      api.update_status('@'+mention.user.screen_name + ' '+ clean_tweet + ' we are currently testing ' , mention.id)
+      api.update_status('@'+mention.user.screen_name + ' '+ city + ' we are currently testing ' , mention.id)
+      # api.update_status('@'+mention.user.screen_name + ' '+ city + ' air quality is currently '+ aqual ' ' , mention.id)
       print('Replied to @ ' + mention.user.screen_name)
 
 
