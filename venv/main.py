@@ -1,21 +1,42 @@
 import tweepy as twitter
 import requests 
+import asyncio
+import aiohttp
+import time
 import json
 import keys
 import re
 
-# response_API = requests.get(f'http://api.waqi.info/feed/newyork/?token={keys.API_TOKEN}')
-# print(response_API.status_code)
+# async def main():
+#   print('heres johnny')
+#   await foo('text')
 
-# data = response_API.text
-# parse_json = json.loads(data)
+# async def foo(text):
+#   print(text)
+#   await asyncio.sleep(1)
 
-# print(parse_json)
-# api = f'http://api.waqi.info/feed/newyork/?token={keys.API_TOKEN}'
+
+# asyncio.run(main())
+
 city = ''
-aqual = None
+results = []
+aqual = 0
 
-def get_data():
+
+# async def get_data():
+#   async with aiohttp.ClientSession() as session:
+#     new_data = None
+#     response = await session.get(f'http://api.waqi.info/feed/{city}/?token={keys.API_TOKEN}', ssl=False)
+#     results.append(await response.json())
+#     result = results[0]
+#     for key in result.keys():
+#       if key == 'data':
+#         new_data = (key, result[key])
+#         aqual = new_data[1]['aqi']
+#         print(aqual)
+#         return aqual
+
+def get_data(city):
     new_data = None
     response = requests.get(f'http://api.waqi.info/feed/{city}/?token={keys.API_TOKEN}')
     data = response.text
@@ -24,26 +45,9 @@ def get_data():
       if key == 'data':
         new_data = (key, parse_json[key])
         aqual = new_data[1]['aqi']
-    print(aqual)    
+        print(aqual)    
     
-
-# get_data()
-# --------------------------
-
-# def tweet(api: tweepy.API, message: str, image_path=None):
-#     if image_path:
-#         api.update_status_with_media(message, image_path)
-#     else:
-#         api.update_status(message)
-
-
-# print('Tweeted successfully')
-
-# if __name__ == '__main__':
-#     api = api()
-#     tweet(api, 'Testing testing ')
-
-# -------------------------
+        
 
 auth = twitter.OAuthHandler(keys.api_key, keys.api_secret)
 auth.set_access_token(keys.access_token, keys.access_token_secret)
@@ -66,7 +70,8 @@ def store_id(id, file):
 last_seen_id = retrieve_id(FILE)
 mentions = api.mentions_timeline(last_seen_id, tweet_mode="extended")
 
-for mention in reversed(mentions):
+def main(aqual):
+  for mention in reversed(mentions):
     if "airqual" in mention.full_text:
       tweet = (mention.full_text)
       # print(tweet, "printing tweet")
@@ -78,22 +83,25 @@ for mention in reversed(mentions):
       clean_tweet = clean_tweet.replace(" ", "")
       # print(clean_tweet, "this is the clean tweet")
       # logic to sort location for api search params go here
-      city = clean_tweet
-      get_data()
+      city = clean_tweet 
+      get_data(city)
       last_seen_id = mention.id
       store_id(last_seen_id, FILE)
-      api.update_status('@'+mention.user.screen_name + ' '+ city + ' we are currently testing ' , mention.id)
+      api.update_status((f'@{mention.user.screen_name} {aqual} we are currently testing '), mention.id)
       # api.update_status('@'+mention.user.screen_name + ' '+ city + ' air quality is currently '+ aqual ' ' , mention.id)
       print('Replied to @ ' + mention.user.screen_name)
 
+if aqual != 0:
+  main(aqual)
+else:
+  get_data(city)
 
 
 
-# def tweet(text):
-#   api.update_status(text)
-#   print('Tweeted successfully')
+# get_data function 
+# reply function
+# make for loop for mentions a function
 
-# tweet("Hello this is a test tweet")
 
 
 '''
