@@ -28,9 +28,6 @@ api = twitter.API(auth)
 
 FILE = "id.txt"
 
-
-hold = []
-
 while True:
   def retrieve_id(file):
     f_read = open(file, "r")
@@ -53,14 +50,6 @@ while True:
   mentions = api.mentions_timeline(last_seen_id, tweet_mode="extended")
 
   for mention in reversed(mentions):
-  # hold = mentions[1]._json['id']
-  # if hold!= None:
-  #     print(hold, 'hold here')
-    # if mention._json['id'] == last_seen_id:
-    #   print(mention._json['id'], last_seen_id)
-    #   break
-    # else:
-      # hold.append((mention._json['id']))
       if "airqual" in mention.full_text:
         last_seen_id = mention.id
         store_id(last_seen_id, FILE)
@@ -76,11 +65,8 @@ while True:
         print(city)
         aqual = get_data()
         print(aqual, 'aqual here')
-        # if aqual:
         reply()
 
-    
-
   print("sleeping")
-  time.sleep(10)
+  time.sleep(20)
   print('awake')
