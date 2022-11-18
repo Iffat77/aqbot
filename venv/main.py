@@ -1,4 +1,4 @@
-import tweepy as twitter
+import tweepy 
 import requests
 import asyncio
 import time
@@ -9,8 +9,8 @@ import re
 city = ''
 aqual = None
 error_msg = None
-
-def get_data():
+while True:
+  def get_data():
     new_data = None
     response = requests.get(
         f'http://api.waqi.info/feed/{city}/?token={keys.API_TOKEN}')
@@ -25,60 +25,96 @@ def get_data():
             new_data = (key, parse_json[key])
             aqual = new_data[1]['aqi']
             return aqual
-auth = twitter.OAuthHandler(keys.api_key, keys.api_secret)
-auth.set_access_token(keys.access_token, keys.access_token_secret)
-api = twitter.API(auth)
 
-FILE = "id.txt"
+  client = tweepy.Client(keys.bearer_token, keys.api_key, keys.api_secret, keys.access_token, keys.access_token_secret)
+  auth = tweepy.OAuthHandler(keys.api_key, keys.api_secret)
+  auth.set_access_token(keys.access_token, keys.access_token_secret)
+  api = tweepy.API(auth)
 
-while True:
-  def retrieve_id(file):
-    f_read = open(file, "r")
-    last_seen_id = int(f_read.read().strip())
-    f_read.close()
-    return last_seen_id
-
-  def store_id(id, file):
-    f_write = open(file, "w")
-    f_write.write(str(id))
-    f_write.close()
-    return
+  client_id = client.get_me().data.id
+  start_id = 1
+  message = ''
 
   def reply():
-    api.update_status(
-        (f'@{mention.user.screen_name} PM2.5 Air Quality Index in {city} is currently {aqual} '), mention.id)
-    print('Replied to @ ' + mention.user.screen_name)
-
+    start_id = twee_id
+    message = (f'PM2.5 Air Quality Index in {city} is currently {aqual}') 
+    print(message)
+    print(start_id, 'start id ')
+  
   def err_reply():
     print('there was an error')
     api.update_status(
         (f'@{mention.user.screen_name} It seems there was touble retrieving data for the city of {city} '), mention.id)
     print('Replied to @ ' + mention.user.screen_name)
 
-  last_seen_id = retrieve_id(FILE)
-  mentions = api.mentions_timeline(last_seen_id, tweet_mode="extended")
 
-  for mention in reversed(mentions):
-      if "airqual" in mention.full_text:
-        last_seen_id = mention.id
-        store_id(last_seen_id, FILE)
-        tweet = (mention.full_text)
+  res = client.get_users_mentions(client_id, since_id=start_id)
+  # print(res.data[0])
+
+  if res.data != None:
+    # mention = str(res.data[0])
+    for twee in res.data:
+      print(start_id, 'first id')
+      twee_id = res.meta['newest_id']
+      # print(twee_id, 'this the id')
+      mention = (str(twee))
+      if 'airqual' in mention:
+        tweet = mention
         clean_tweet = re.sub("@[A-Za-z0-9_]+", "", tweet)
         clean_tweet = re.sub("#[A-Za-z0-9_]+", "", clean_tweet)
         clean_tweet = re.sub("''[A-Za-z0-9_]+", "", clean_tweet)
         clean_tweet = clean_tweet.lower()
         clean_tweet = clean_tweet.replace(" ", "")
         clean_tweet = " ".join(clean_tweet.split())
-        # logic to sort location for api search params go here
         city = clean_tweet
-        print(city)
-        # logic for conditional rendering of error msg or aqual here
+        # print(city)
         aqual = get_data()
         if aqual != None:
           print(f'{aqual} for {city}')
-          reply()
+      try:
+        print(city, 'here')
+        reply()
+        client.create_tweet(in_reply_to_tweet_id=twee_id, text=message)
+        # print(twee_id)
+        # start_id = twee_id
+        # print(start_id, 'second id')
+      except:
+        pass
+  # if "airqual" in mention:
+  #   print('airqual in mention')
+  #   tweet = mention
+  #   clean_tweet = re.sub("@[A-Za-z0-9_]+", "", tweet)
+  #   clean_tweet = re.sub("#[A-Za-z0-9_]+", "", clean_tweet)
+  #   clean_tweet = re.sub("''[A-Za-z0-9_]+", "", clean_tweet)
+  #   clean_tweet = clean_tweet.lower()
+  #   clean_tweet = clean_tweet.replace(" ", "")
+  #   clean_tweet = " ".join(clean_tweet.split())
+  #   city = clean_tweet
+  #   print(city)
+  #   aqual = get_data()
+  #   if aqual != None:
+  #     print(f'{aqual} for {city}')
+      # try:
+      #   print(mention.text)
+      #   client.create_tweet(in_reply_to_tweet_id=mention.id, text=reply())
+      # except:
+      #   pass
+
+
+  # def reply():
+  #   print(aqual)
+    # api.update_status(
+    #     (f'@{mention.user.screen_name} PM2.5 Air Quality Index in {city} is currently {aqual} '), mention.id)
+    # print('Replied to @ ' + mention.user.screen_name)
+
+
+  # last_seen_id = retrieve_id(FILE)
+  # mentions = api.mentions_timeline(last_seen_id, tweet_mode="extended")
+
         
 
   print("sleeping")
-  time.sleep(20)
+  time.sleep(5)
   print('awake')
+
+# figure out why start id is not updating 
