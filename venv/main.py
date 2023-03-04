@@ -1,3 +1,5 @@
+
+
 import tweepy as twitter
 import requests
 import asyncio
@@ -25,9 +27,11 @@ def get_data():
             new_data = (key, parse_json[key])
             aqual = new_data[1]['aqi']
             return aqual
+
+            
 auth = twitter.OAuthHandler(keys.api_key, keys.api_secret)
 auth.set_access_token(keys.access_token, keys.access_token_secret)
-api = twitter.API(auth)
+api = twitter.API(auth, wait_on_rate_limit=True)
 
 FILE = "id.txt"
 
@@ -80,5 +84,5 @@ while True:
         
 
   print("sleeping")
-  time.sleep(20)
+  time.sleep(30)
   print('awake')
